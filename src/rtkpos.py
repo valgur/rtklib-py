@@ -9,6 +9,7 @@ from copy import copy
 
 import numpy as np
 from numpy.linalg import inv
+from tqdm.auto import tqdm
 
 import __ppk_config as cfg
 import rinex as rn
@@ -1115,6 +1116,7 @@ def rtkpos(nav, rov, base, dir):
     n = 0
     sol = gn.Sol()
     # loop through all epochs
+    progress = tqdm(total=min(len(rov.obslist), len(base.obslist)))
     while True:
         if n == 0:
             # first epoch
@@ -1133,7 +1135,7 @@ def rtkpos(nav, rov, base, dir):
             if len(nav.sol) > 0:
                 t = nav.sol[-1].t  # previous epoch
             obsr, obsb = rn.next_obs(nav, rov, base, dir)
-        if obsr == []:
+        if not obsr:
             break
         # single precision solution, used to update solution time
         if nav.use_sing_pos or sol.stat == gn.SOLQ_NONE or sol.rr[0] == 0.0:
@@ -1146,13 +1148,14 @@ def rtkpos(nav, rov, base, dir):
         # relative solution
         relpos(nav, obsr, obsb, sol)
         ep = gn.time2epoch(sol.t)
-        print(
-            '\r   {:2d}/{:2d}/{:4d} {:02d}:{:02d}:{:05.2f}: {:d}'.format(
+        progress.set_description(
+            '{:2d}/{:2d}/{:4d} {:02d}:{:02d}:{:05.2f}: {:d}'.format(
                 ep[1], ep[2], ep[0], ep[3], ep[4], ep[5], sol.stat
-            ),
-            end='',
+            )
         )
+        progress.update()
         n += 1
-        if nav.maxepoch != None and n > nav.maxepoch:
+        if nav.maxepoch is not None and n > nav.maxepoch:
             break
+    progress.close()
     trace(3, 'rtkpos: end solution\n')
