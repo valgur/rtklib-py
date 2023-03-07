@@ -4,10 +4,12 @@ RTKLIB-Py: Top level code for post-processing solution from rinex data
 Copyright (c) 2022 Tim Everett
 """
 
-import sys, os, shutil
+import os
+import shutil
+import sys
 
 # set run parameters
-maxepoch = None # max # of epochs, used for debug, None = no limit
+maxepoch = None  # max # of epochs, used for debug, None = no limit
 trace_level = 3  # debug trace level
 basepos = []  # default to not specified here
 
@@ -44,10 +46,9 @@ solfile = rovfile[:-4] + '.pos'
 if trace_level > 0:
     trcfile = os.path.join(datadir, rovfile[:-4] + '.trace')
     sys.stderr = open(trcfile, "w")
-    
+
 # Read config file
 shutil.copyfile(cfgfile, '__ppk_config.py')
-
 
 # init solution
 os.chdir(datadir)
@@ -59,7 +60,7 @@ nav.maxepoch = maxepoch
 rov = rn.rnx_decode(cfg)
 print('Reading rover obs...')
 if nav.filtertype == 'backward':
-    maxepoch = None   # load all obs for 
+    maxepoch = None  # load all obs for
 rov.decode_obsfile(nav, rovfile, maxepoch)
 
 # load base obs
@@ -70,7 +71,7 @@ if basepos != []:
     nav.rb = basepos
 elif nav.rb[0] == 0:
     nav.rb = base.pos
-    
+
 # load nav data from rover obs
 print('Reading nav data...')
 rov.decode_nav(navfile, nav)
@@ -81,8 +82,3 @@ sol = procpos(nav, rov, base)
 
 # save solution to file
 savesol(sol, solfile)
-
-
-
-
-
